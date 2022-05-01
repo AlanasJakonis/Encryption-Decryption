@@ -80,8 +80,7 @@ browser. Instead we will use `curl` to interact with the server.
 To register a new user:
 
 ```sh
-curl -X POST -H "Content-Type: application/json" -d "{\"name\": \"Alanas Jakonis\", \"pnumber\": \"0857735199\", \"disabilities\": \"broken arm\", \"email\": \"foo@bar.com\", \"password\": \"pass\", \"displayName\": \"Foo Bar\"}" http://localhost:4000/students/api/registration
-
+curl -X POST http://localhost:4000/students/api/registration -d '{"email": "foo@bar.com", "password": "pass", "displayName": "Foo Bar"}'
 ```
 
 If the registration is successful, it will confirm the email address
@@ -103,7 +102,7 @@ register the same user twice, it will return an error message:
 To login:
 
 ```sh
-curl -X POST -H "Content-Type: application/json" -d "{\"email\": \"foo@bar.com\", \"password\": \"pass\"}" http://localhost:4000/students/api/login
+curl -X POST http://localhost:4000/students/api/login -d '{"email": "foo@bar.com", "password": "pass"}'
 ```
 
 If the login is successful, it will return a token and expiration
@@ -130,7 +129,7 @@ To display a user's profile you need to a token that has not
 expired. Then you can use:
 
 ```sh
-curl -H "X-TOKEN: dabf3cb58b55400394b80c48727feaac" http://localhost:4000/students/api/user
+curl -H "X-TOKEN: d4a5d8b20fe143b7b92e4fba92d409be" http://localhost:4000/students/api/user
 ```
 
 Note that this API call does not require the `-X POST` flag.
@@ -149,7 +148,7 @@ use:
 
 
 ```sh
-curl -X POST -H "X-TOKEN: dabf3cb58b55400394b80c48727feaac" http://localhost:4000/students/api/logout
+curl -X POST -H "X-TOKEN: d4a5d8b20fe143b7b92e4fba92d409be" http://localhost:4000/students/api/logout
 ```
 
 ## Test the Project

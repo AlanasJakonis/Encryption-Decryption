@@ -3,8 +3,20 @@ from time import mktime
 from tornado.escape import json_decode, utf8
 from tornado.gen import coroutine
 from uuid import uuid4
-
 from .base import BaseHandler
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+import os
+
+salt = os.urandom(16)
+kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1)
+
+import json
+
+class Object:
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=True)
+
 
 class LoginHandler(BaseHandler):
 
@@ -27,15 +39,37 @@ class LoginHandler(BaseHandler):
 
         return token
 
+
+
+
     @coroutine
     def post(self):
+
+        salt = yield self.db.users.find_one({
+          'email': email
+        }, {
+          'salt': 1
+        })        
         try:
             body = json_decode(self.request.body)
             email = body['email'].lower().strip()
             if not isinstance(email, str):
                 raise Exception()
+            email = body.get('email')
+            email_bytes = bytes(email, "utf-8")
             password = body['password']
             if not isinstance(password, str):
+                raise Exception()
+            password = body.get('password')
+            password_bytes = bytes(password, "utf-8")
+
+            kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1)
+
+            hashed_password = kdf.derive(password_bytes)
+            
+            if pw is None:
+                pw = email
+            if not isinstance(pw, str):
                 raise Exception()
         except:
             self.send_error(400, message='You must provide an email address and password!')
@@ -52,7 +86,7 @@ class LoginHandler(BaseHandler):
         user = yield self.db.users.find_one({
           'email': email
         }, {
-          'password': 1
+          'password': password
         })
 
         if user is None:
