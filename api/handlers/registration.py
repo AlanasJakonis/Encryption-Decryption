@@ -1,25 +1,12 @@
 from json import dumps
 from logging import info
-from unicodedata import name
 from tornado.escape import json_decode, utf8
 from tornado.gen import coroutine
 from .base import BaseHandler
-from logging import info
-import os
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
+from cryptography.fernet import Fernet
 
-key = "QGkOOzjhDrhPcP1a9sluHTvQMsg4aNFp"
-key_bytes = bytes(key, "utf-8")
-nonce_bytes = os.urandom(16)
-nonce=nonce_bytes.hex()
-chacha20_cipher = Cipher(algorithms.ChaCha20(key_bytes, nonce_bytes),
-                         mode=None)
-chacha20_encryptor = chacha20_cipher.encryptor()
-
-from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-salt = os.urandom(16)
-kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1)
-
+key = Fernet.generate_key()
+crypter = Fernet(key)
 
 class RegistrationHandler(BaseHandler):
 
@@ -28,52 +15,30 @@ class RegistrationHandler(BaseHandler):
         try:
             body = json_decode(self.request.body)
             name = body['name'].lower().strip()
+            bname = bytes(name, 'utf8')
+            fname = crypter.encrypt(bname)
             if not isinstance(name, str):
                 raise Exception()
-            nm = body.get('name')
-            name_bytes = bytes(nm, "utf-8")
-            kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1)
-            hashed_name = kdf.derive(name_bytes)
-            if nm is None:
-                nm = email
-            if not isinstance(nm, str):
+            number = body['number'].lower().strip()
+            bnumber = bytes(number, 'utf8')
+            fnumber = crypter.encrypt(bnumber)
+            if not isinstance(number, str):
                 raise Exception()
-            pnumber = body['pnumber'].strip()
-            if not isinstance(pnumber, str):
-                raise Exception()
-            pn = body.get('pnumber')
-            number_bytes = bytes(pn, "utf-8")
-            kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1)
-            hashed_pnumber = kdf.derive(number_bytes)
-            if pn is None:
-                pn = email
-            disabilities = body['disabilities'].strip()
+            disabilities = body['disabilities'].lower().strip()
+            bdisabilities = bytes(disabilities, 'utf8')
+            fdisabilities = crypter.encrypt(bdisabilities)
             if not isinstance(disabilities, str):
                 raise Exception()
-            disa = body.get('disabilities')
-            disabilities_bytes = bytes(disa, "utf-8")
-            kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1)
-            hashed_disabilities = kdf.derive(disabilities_bytes)
-            if disa is None:
-                disa = email            
             email = body['email'].lower().strip()
+            bemail = bytes(email, 'utf8')
+            femail = crypter.encrypt(bemail)
             if not isinstance(email, str):
                 raise Exception()
-            em = body.get('email')
-            email_bytes = bytes(em, "utf-8")
-            kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1)
-            hashed_email = kdf.derive(email_bytes)
-            if em is None:
-                em = email   
             password = body['password']
+            bpassword = bytes(password, 'utf8')
+            fpassword = crypter.encrypt(bpassword)
             if not isinstance(password, str):
                 raise Exception()
-            passw = body.get('password')
-            password_bytes = bytes(passw, "utf-8")
-            kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1)
-            hashed_password = kdf.derive(password_bytes)
-            if passw is None:
-                passw = email   
             display_name = body.get('displayName')
             if display_name is None:
                 display_name = email
@@ -81,18 +46,6 @@ class RegistrationHandler(BaseHandler):
                 raise Exception()
         except Exception as e:
             self.send_error(400, message='You must provide an email address, password and display name!')
-            return
-
-        if not name:
-            self.send_error(400, message='The name is invalid!')
-            return
-
-        if not disabilities:
-            self.send_error(400, message='Disa')
-            return
-
-        if not pnumber:
-            self.send_error(400, message='The number is invalid!')
             return
 
         if not email:
@@ -114,18 +67,36 @@ class RegistrationHandler(BaseHandler):
         if user is not None:
             self.send_error(409, message='A user with the given email address already exists!')
             return
+        
+        decryptname = crypter.decrypt(fname)
+        decryptname2 = (str(decryptname, 'utf8'))
+
+        decryptnumber = crypter.decrypt(fnumber)
+        decryptnumber2 = (str(decryptnumber, 'utf8'))
+
+        
+        decryptdisabilities = crypter.decrypt(fdisabilities)
+        decryptdisabilities2 = (str(decryptdisabilities, 'utf8'))
+
+        
+        decryptemail = crypter.decrypt(femail)
+        decryptemail2 = (str(decryptemail, 'utf8'))
+
+        
+        decryptpassword = crypter.decrypt(fpassword)
+        decryptpassword2 = (str(decryptpassword, 'utf8'))
+
 
         yield self.db.users.insert_one({
-            'Name': hashed_name,
-            'Phone number': hashed_pnumber,
-            'Disabilities': hashed_disabilities,
-            'Email Address': hashed_email,
-            'Password': hashed_password,
-            'Display Name': display_name
+            'name': fname,
+            'number': fnumber,
+            'disabilities': fdisabilities,
+            'email': femail,
+            'password': fpassword,
+            'displayName': display_name
         })
 
         self.set_status(200)
-        self.response['name'] = name
         self.response['email'] = email
         self.response['displayName'] = display_name
 

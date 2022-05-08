@@ -15,6 +15,7 @@ nonce=nonce_bytes.hex()
 chacha20_cipher = Cipher(algorithms.ChaCha20(key_bytes, nonce_bytes),
                          mode=None)
 chacha20_encryptor = chacha20_cipher.encryptor()
+chacha20_encryptor = chacha20_cipher.decryptor()
 
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 salt = os.urandom(16)

@@ -8,7 +8,7 @@ curl -X POST -H "X-TOKEN: d4a5d8b20fe143b7b92e4fba92d409be" http://localhost:400
 
 // Register
 curl -X POST -H "Content-Type: application/json" -d "{\"email\": \"foo@bar.com\", \"password\": \"pass\", \"displayName\": \"Foo Bar\"}" http://localhost:4000/students/api/registration
-curl -X POST -H "Content-Type: application/json" -d "{\"name\": \"Alanas Jakonis\", \"pnumber\": \"0857735199\", \"disabilities\": \"broken arm\", \"email\": \"foo@bar.com\", \"password\": \"pass\", \"displayName\": \"Foo Bar\"}" http://localhost:4000/students/api/registration
+curl -X POST -H "Content-Type: application/json" -d "{\"name\": \"Alanas Jakonis\", \"number\": \"0857735199\", \"disabilities\": \"broken arm\", \"email\": \"foo@bar.com\", \"password\": \"pass\", \"displayName\": \"Foo Bar\"}" http://localhost:4000/students/api/registration
 
 //Login
 curl -X POST -H "Content-Type: application/json" -d "{\"email\": \"foo@bar.com\", \"password\": \"pass\"}" http://localhost:4000/students/api/login
